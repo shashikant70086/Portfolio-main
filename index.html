@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shashikant | Robotics & AI</title>
+    
+    <!-- Performance: Preload Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Syne:wght@700;800&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+
+    <!-- Lenis for Smooth Inertia Scrolling -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+
+    <style>
+        :root {
+            /* Theme Variables (Light Default) */
+            --bg-color: #f4f3f0;
+            --text-color: #050505;
+            --accent-color: #ff4d00;
+            --accent-soft: rgba(255, 77, 0, 0.08);
+            --line-color: rgba(0, 0, 0, 0.15);
+            --nav-blend: difference;
+            
+            /* Fluid Responsive Variables */
+            --padding-outer: clamp(1.5rem, 6vw, 6rem); 
+            --section-spacing: clamp(6rem, 15vh, 12rem);
+            --nav-height: clamp(70px, 8vh, 100px);
+            --max-width: 1920px;
+        }
+
+        /* Dark Mode Override */
+        body.dark-mode {
+            --bg-color: #0a0a0a;
+            --text-color: #e0e0e0;
+            --accent-color: #ff4d00;
+            --accent-soft: rgba(255, 77, 0, 0.15);
+            --line-color: rgba(255, 255, 255, 0.12);
+            --nav-blend: normal; /* Difference blend doesn't work well on dark-on-dark */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            /* Fix for Lenis smooth scroll */
+            height: 100%;
+            scroll-behavior: initial; 
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        /* --- LAYOUT LOCK --- */
+        .page-wrapper {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            position: relative;
+            width: 100%;
+        }
+
+        /* --- TYPOGRAPHY UTILS --- */
+        .heavy-font {
+            font-family: "Syne", system-ui, sans-serif;
+            font-weight: 800;
+            text-transform: uppercase;
+            line-height: 0.85;
+            letter-spacing: -0.03em;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 var(--padding-outer);
+            height: var(--nav-height);
+            position: fixed;
+            top: 0;
+            left: 0; 
+            right: 0;
+            max-width: var(--max-width); /* Lock nav width too */
+            margin: 0 auto;
+            z-index: 100;
+            mix-blend-mode: var(--nav-blend);
+            color: var(--text-color);
+            transition: height 0.3s ease, transform 0.3s ease;
+        }
+        
+        /* Nav color needs to invert manually in dark mode if blend mode is off */
+        body.dark-mode nav {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            mix-blend-mode: normal;
+        }
+        body:not(.dark-mode) nav {
+            color: #fff; /* For difference mode */
+        }
+
+        .logo {
+            font-family: "Syne", sans-serif;
+            font-weight: 700;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ff4d00;
+            z-index: 102; /* Above mobile menu */
+        }
+
+        .logo span {
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            border: 1.5px solid currentColor;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        /* Desktop Menu */
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 102;
+        }
+
+        .menu-link {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            border-radius: 999px;
+            padding: 0.6rem 1.5rem;
+            border: 1px solid currentColor;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            display: block;
+        }
+
+        /* Theme Toggle Btn */
+        .theme-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: currentColor;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s;
+        }
+        .theme-btn:hover { transform: rotate(15deg); }
+        .theme-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+        /* Mobile Hamburger */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 102;
+        }
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background-color: currentColor;
+            transition: all 0.3s ease;
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: var(--bg-color);
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            transform: translateY(-100%);
+            transition: transform 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+        
+        .mobile-menu.active {
+            transform: translateY(0);
+        }
+        
+        .mobile-menu a {
+            font-family: "Syne", sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--text-color);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        
+        .mobile-menu.active a {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            min-height: 100vh;
+            padding: 0 var(--padding-outer);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: var(--nav-height);
+        }
+
+        .hero-label {
+            font-size: clamp(0.85rem, 2vw, 1rem);
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+            letter-spacing: 0.15em;
+            font-weight: 600;
+            opacity: 0.6;
+        }
+
+        .hero h1 {
+            font-size: clamp(3.5rem, 14vw, 13rem);
+            margin-left: -0.05em;
+            margin-bottom: 1.5rem;
+            word-break: break-word;
+            line-height: 0.9;
+        }
+
+        .hero-badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            max-width: 900px;
+        }
+
+        .hero-badge {
+            border-radius: 999px;
+            border: 1px solid var(--line-color);
+            padding: 0.6rem 1.2rem;
+            font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.05); /* Works for dark/light */
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        .hero p {
+            font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+            max-width: 780px;
+            margin-top: 4rem;
+            line-height: 1.5;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 3.5rem;
+            font-size: clamp(0.85rem, 2vw, 1rem);
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            opacity: 0.75;
+        }
+
+        .hero-meta span {
+            border-bottom: 1px solid currentColor;
+            padding-bottom: 0.3rem;
+        }
+
+        /* --- WORK LIST --- */
+        .section-header {
+            padding: 3rem var(--padding-outer) 1.5rem;
+            border-top: 2px solid var(--text-color);
+            border-bottom: 2px solid var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: var(--section-spacing);
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            background: linear-gradient(to bottom, var(--bg-color) 0%, var(--bg-color) 100%); /* Hides line behind */
+        }
+
+        .label {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .section-note {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            max-width: 500px;
+            text-align: right;
+            line-height: 1.5;
+            opacity: 0.8;
+        }
+
+        .project-list {
+            list-style: none;
+            margin-bottom: 5rem; 
+        }
+
+        .project-item {
+            border-bottom: 1px solid var(--line-color);
+        }
+
+        .project-link {
+            display: block;
+            padding: clamp(3rem, 8vh, 5rem) var(--padding-outer); 
+            font-size: clamp(2.5rem, 8vw, 7.5rem);
+            position: relative;
+            overflow: hidden;
+            transition: color 0.4s ease, padding-left 0.4s ease;
+        }
+
+        /* Hover Interaction (Desktop) */
+        @media (hover: hover) {
+            .project-link:hover {
+                color: var(--accent-color);
+                padding-left: calc(var(--padding-outer) + 2vw);
+            }
+            .project-link:hover .project-cat {
+                opacity: 1;
+                transform: translateY(-50%) translate(0, 0);
+            }
+        }
+
+        /* Expanded State (Touch/Mobile Active) */
+        .project-link.expanded {
+            color: var(--accent-color);
+            padding-left: calc(var(--padding-outer) + 1vw);
+        }
+        .project-link.expanded .project-cat {
+            opacity: 1;
+            transform: translateY(-50%) translate(0, 0);
+            display: block;
+            position: static; /* Stack properly on mobile when expanded */
+            transform: none;
+            margin-top: 1rem;
+        }
+        .project-link.expanded .project-meta {
+            opacity: 1;
+            margin-top: 0.5rem;
+        }
+
+
+        .project-cat {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+            font-weight: 500;
+            letter-spacing: normal;
+            line-height: normal;
+            text-transform: none;
+            position: absolute;
+            top: 50%;
+            right: var(--padding-outer);
+            transform: translateY(-50%) translate(20px, 0);
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .project-meta {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+            font-weight: 500;
+            text-transform: uppercase;
+            opacity: 0.65;
+            margin-top: 1rem;
+            letter-spacing: 0.04em;
+            line-height: 1.4;
+            max-width: 90%;
+        }
+
+        /* --- STATEMENT --- */
+        .statement {
+            padding: var(--section-spacing) var(--padding-outer);
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            transition: background-color 0.5s, color 0.5s;
+        }
+
+        .statement-text {
+            font-size: clamp(2rem, 5.5vw, 5.5rem);
+            line-height: 1.15;
+            text-indent: 12vw;
+            max-width: 1400px;
+            letter-spacing: -0.02em;
+            margin-top: 2rem;
+        }
+
+        .statement-highlight {
+            color: var(--accent-color);
+        }
+
+        .statement-sub {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            opacity: 0.8;
+            margin-top: 4rem;
+            max-width: 700px;
+            line-height: 1.7;
+            margin-left: auto;
+        }
+
+        /* --- SKILLS --- */
+        .skills-wrapper {
+             padding: var(--section-spacing) var(--padding-outer);
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: clamp(1.5rem, 4vw, 3rem);
+            margin-top: 5rem;
+        }
+
+        .skill-block {
+            border-radius: 1.2rem;
+            border: 1px solid var(--line-color);
+            padding: clamp(1.5rem, 4vw, 3rem);
+            background: rgba(125, 125, 125, 0.05); /* Neutral glass */
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .skill-block:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-color);
+        }
+
+        .skill-title {
+            font-family: "Syne", sans-serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.2rem;
+            border-bottom: 1px solid var(--line-color);
+        }
+
+        .skill-tags {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            line-height: 1.6;
+            margin-bottom: auto;
+        }
+
+        .chip-row {
+            margin-top: 2.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .chip {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            border-radius: 999px;
+            padding: 0.5rem 1.2rem;
+            border: 1px solid var(--line-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            padding: var(--section-spacing) var(--padding-outer) 4rem;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cta {
+            font-size: clamp(4rem, 16vw, 18rem);
+            text-align: center;
+            line-height: 0.85;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            display: block;
+        }
+
+        .cta:hover {
+            transform: scale(0.96);
+            color: var(--accent-color);
+        }
+
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            font-size: 1.1rem;
+            margin-top: 4rem;
+            text-transform: uppercase;
+            gap: 2rem;
+            font-weight: 500;
+            border-top: 1px solid var(--line-color);
+            padding-top: 3rem;
+        }
+
+        .socials {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .socials a:hover {
+            color: var(--accent-color);
+        }
+
+        .pill {
+            display: inline-block;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            padding: 0.5rem 1.2rem;
+            border-radius: 999px;
+            border: 1px solid var(--line-color);
+            background: var(--accent-soft);
+            color: var(--text-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- ANIMATION --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(60px);
+            transition: opacity 1s cubic-bezier(0.2, 1, 0.3, 1), transform 1s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- MOBILE LAYOUT OVERRIDES --- */
+        @media (max-width: 768px) {
+            .menu-link { display: none; } /* Hide 'Get in touch' on mobile nav */
+            .hamburger { display: flex; } /* Show hamburger */
+            
+            .section-header { 
+                flex-direction: column; 
+                align-items: flex-start; 
+                gap: 1rem;
+            }
+            .section-note { text-align: left; max-width: 100%; }
+            
+            /* Remove desktop indent */
+            .statement-text { text-indent: 0; }
+            
+            /* Footer stack */
+            .footer-info { 
+                flex-direction: column; 
+                align-items: flex-start; 
+                gap: 1.5rem; 
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#work" onclick="toggleMenu()">WORK</a>
+        <a href="#about" onclick="toggleMenu()">ABOUT</a>
+        <a href="#contact" onclick="toggleMenu()">CONTACT</a>
+    </div>
+
+    <!-- Main Wrapper for Ultra-Wide Lock -->
+    <div class="page-wrapper">
+        
+        <nav>
+            <div class="logo">
+                <span>SKANT</span> SHASHIKANT
+            </div>
+            
+            <div class="nav-actions">
+                <!-- Dark Mode Toggle -->
+                <button class="theme-btn" id="themeToggle" aria-label="Toggle Dark Mode">
+                    <!-- Sun Icon -->
+                    <svg class="sun-icon" viewBox="0 0 24 24" style="display: block;">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+
+                <a href="mailto:shashikant70086@gmail.com" class="menu-link">Get in touch</a>
+                
+                <button class="hamburger" onclick="toggleMenu()" aria-label="Toggle Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-label reveal">Robotics • Computer Vision • Air Quality</div>
+            <h1 class="heavy-font reveal">ROBOTICS</h1>
+            <h1 class="heavy-font reveal">& VISION</h1>
+
+            <div class="hero-badge-row reveal">
+                <div class="hero-badge">Conrad Innovator — Eco Titan</div>
+                <div class="hero-badge">Stereo Vision Assistive System</div>
+                <div class="hero-badge">PM2.5 Modelling for India</div>
+                <div class="hero-badge">SKANT Community & Ignite Innovation</div>
+            </div>
+
+            <p class="reveal">
+                I am Shashikant, an engineering & robotics student from India building
+                things at the intersection of hardware, computer vision, and data.
+                From ESP32-CAM stereo vision for assistance, to fibre-based broadband and
+                air-quality dashboards, I like turning ideas into systems that actually ship.
+            </p>
+
+            <div class="hero-meta reveal">
+                <span>Currently → Stereo-vision assistive module & PM2.5 dashboard</span>
+                <span>Open for → Internships & research collaborations</span>
+            </div>
+        </section>
+
+        <section id="work">
+            <div class="section-header reveal">
+                <span class="label">(01) Selected Work</span>
+                <p class="section-note">
+                    A mix of robotics, AI, and real-world deployment. I care about
+                    reliability, explainability, and doing more than just cool demos.
+                </p>
+            </div>
+
+            <ul class="project-list">
+                <li class="project-item reveal">
+                    <!-- Added onclick for touch devices to toggle expansion -->
+                    <a href="#" class="project-link heavy-font" onclick="handleProjectClick(event, this)">
+                        ESP32-CAM STEREO VISION
+                        <span class="project-cat">Assistive depth & tracking system</span>
+                        <div class="project-meta">In progress • ESP32-CAM • OpenCV • YOLOv8 • Real-time depth</div>
+                    </a>
+                </li>
+                <li class="project-item reveal">
+                    <a href="#" class="project-link heavy-font" onclick="handleProjectClick(event, this)">
+                        PM2.5 FROM SPACE
+                        <span class="project-cat">INSAT-3D/3DR + MERRA-2 + CPCB</span>
+                        <div class="project-meta">Bharatiya Antariksh Hackathon • PyTorch • Random Forest / XGBoost • Streamlit</div>
+                    </a>
+                </li>
+                <li class="project-item reveal">
+                    <a href="#" class="project-link heavy-font" onclick="handleProjectClick(event, this)">
+                        ECO TITAN
+                        <span class="project-cat">Conrad Innovator — Energy & Environment</span>
+                        <div class="project-meta">Systems thinking • Sustainability • Global challenge</div>
+                    </a>
+                </li>
+                <li class="project-item reveal">
+                    <a href="#" class="project-link heavy-font" onclick="handleProjectClick(event, this)">
+                        FIBRE MICRO-ISP
+                        <span class="project-cat">Local broadband service</span>
+                        <div class="project-meta">Fibre infra • Networking • On-ground deployment</div>
+                    </a>
+                </li>
+                <li class="project-item reveal">
+                    <a href="#" class="project-link heavy-font" onclick="handleProjectClick(event, this)">
+                        RC DRIFT PLATFORM
+                        <span class="project-cat">Mechanics + control</span>
+                        <div class="project-meta">Custom steering • Robotics R&D • Future autonomy</div>
+                    </a>
+                </li>
+                <li class="project-item reveal">
+                    <a href="#" class="project-link heavy-font" onclick="handleProjectClick(event, this)">
+                        SKANT & BOOTCAMPS
+                        <span class="project-cat">Teaching robotics & AI</span>
+                        <div class="project-meta">Ignite Innovation • Hands-on workshops • Community</div>
+                    </a>
+                </li>
+            </ul>
+        </section>
+
+        <section class="statement" id="about">
+            <div class="label reveal" style="margin-bottom: 2rem;">(02) About & Approach</div>
+            <p class="statement-text heavy-font reveal">
+                I BUILD <span class="statement-highlight">HONEST SYSTEMS</span> THAT ARE NOT JUST
+                PROOF-OF-CONCEPTS BUT CAN <span class="statement-highlight">SURVIVE REAL USERS</span>,
+                REAL SENSORS, AND REAL NOISE.
+            </p>
+            <p class="statement-sub reveal">
+                From robots that track their owner using cameras and sensors, to models that convert
+                satellite AOD into PM2.5 maps, my work tries to balance experimentation with pragmatism.
+                I enjoy debugging, documenting, and teaching as much as building.
+            </p>
+        </section>
+
+        <section class="skills-wrapper">
+            <div class="section-header reveal" style="background: transparent; padding-left: 0; padding-right: 0; margin-top: 0; border-top: none;">
+                <span class="label">(03) Stack</span>
+                <p class="section-note">
+                    Tools and domains I currently use. Always experimenting, but these are stable parts
+                    of my workflow.
+                </p>
+            </div>
+
+            <div class="skills-grid">
+                <div class="skill-block reveal">
+                    <div class="skill-title">Robotics & Embedded</div>
+                    <div class="skill-tags">
+                        ESP32 / ESP32-CAM, Arduino (Uno, Nano), HC-05, ultrasonic sensors, steering
+                        mechanisms, servo & motor control.
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">ESP32</span>
+                        <span class="chip">Arduino</span>
+                        <span class="chip">Sensors</span>
+                    </div>
+                </div>
+
+                <div class="skill-block reveal">
+                    <div class="skill-title">Computer Vision & AI</div>
+                    <div class="skill-tags">
+                        OpenCV, MediaPipe, YOLOv8, classical CV, stereo depth, tracking, PyTorch models
+                        for regression & classification.
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">OpenCV</span>
+                        <span class="chip">YOLOv8</span>
+                        <span class="chip">PyTorch</span>
+                    </div>
+                </div>
+
+                <div class="skill-block reveal">
+                    <div class="skill-title">Data & Dashboards</div>
+                    <div class="skill-tags">
+                        Streamlit dashboards, data preprocessing, evaluation and visualization of air-quality
+                        predictions using INSAT & MERRA-2.
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Streamlit</span>
+                        <span class="chip">MERRA-2</span>
+                        <span class="chip">INSAT-3D/3DR</span>
+                    </div>
+                </div>
+
+                <div class="skill-block reveal">
+                    <div class="skill-title">Teaching & Community</div>
+                    <div class="skill-tags">
+                        Designing bootcamps and workshops under SKANT and Ignite Innovation, helping students
+                        move from theory to working prototypes.
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Workshops</span>
+                        <span class="chip">Mentoring</span>
+                        <span class="chip">Curriculum</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer id="contact">
+            <div class="label reveal">(04) Contact</div>
+            <a href="mailto:shashikant70086@gmail.com" class="cta heavy-font reveal">
+                LET'S<br />
+                BUILD.
+            </a>
+
+            <div class="footer-info reveal">
+                <div>
+                    <div class="pill">Based in India · IST</div>
+                    <div style="margin-top: 0.5rem;">© <span id="year"></span> Shashikant / SKANT</div>
+                </div>
+                <div class="socials">
+                    
+                    <a href="hhttps://linktr.ee/shashikant.in">
+                         <svg fill="none" height="18px" width="18px" viewBox="0 0 28 28" >
+                             <path d="m15.7603 6.829 4.6725-4.80317 2.712 2.77734-4.9012 4.67248h6.8944v3.85565h-6.9271l4.9339 4.7922-2.712 2.7229-6.6983-6.731-6.69829 6.731-2.712-2.712 4.93387-4.7923h-6.92703v-3.86645h6.89436l-4.9012-4.67248 2.712-2.77734 4.67249 4.80317v-6.829h4.0516zm-4.0516 12.0243h4.0516v9.1489h-4.0516z" fill="#ff4d00"></path>
+                         </svg>
+                        Linktree
+                    </a>
+                    <a href="https://www.instagram.com/shashikant.ind/">
+                        <svg fill="none" height="18px" width="18px" viewBox="0 0 22 22" >
+                            <path d="M12 2C9.2912 2 8.94131 2 7.86907 2.05643C7.03985 2.07241 6.21934 2.22888 5.44244 2.51919C4.78781 2.77878 4.23476 3.11738 3.67043 3.68172C3.11738 4.23476 2.76749 4.78781 2.51919 5.45372C2.27088 6.08578 2.10158 6.80813 2.05643 7.88036C2.01129 8.94131 2 9.27991 2 12C2 14.7088 2 15.0474 2.05643 16.1196C2.10158 17.1919 2.28217 17.9255 2.51919 18.5576C2.77878 19.2122 3.11738 19.7652 3.67043 20.3296C4.23476 20.8826 4.78781 21.2325 5.44244 21.4808C6.08578 21.7291 6.80813 21.8984 7.86907 21.9436C8.94131 21.9887 9.27991 22 12 22C14.7088 22 15.0474 22 16.1196 21.9436C17.1806 21.8984 17.9142 21.7178 18.5463 21.4808C19.2137 21.2306 19.8184 20.8377 20.3183 20.3296C20.8826 19.7652 21.2212 19.2009 21.4695 18.5576C21.7178 17.9142 21.8871 17.1919 21.9436 16.1196C21.9887 15.0587 22 14.7201 22 12C22 9.2912 21.9887 8.9526 21.9436 7.88036C21.9225 7.05065 21.7622 6.23037 21.4695 5.45372C21.2189 4.78649 20.8261 4.18182 20.3183 3.68172C19.754 3.11738 19.2122 2.77878 18.5463 2.51919C17.7686 2.23315 16.9482 2.08051 16.1196 2.06772C15.0474 2.01129 14.7088 2 12 2ZM11.0971 3.80587H12C14.6637 3.80587 14.9797 3.80587 16.0406 3.8623C16.6724 3.8686 17.2985 3.98313 17.8916 4.2009C18.3657 4.38149 18.693 4.59594 19.0429 4.94582C19.3928 5.29571 19.6072 5.63431 19.7991 6.09706C19.9345 6.45824 20.0925 6.97743 20.1377 7.95937C20.1828 9.00903 20.1941 9.32506 20.1941 12C20.1941 14.6637 20.1941 14.9797 20.1377 16.0406C20.1314 16.6724 20.0169 17.2985 19.7991 17.8916C19.6185 18.3657 19.3928 18.693 19.0429 19.0429C18.7043 19.3928 18.3657 19.6072 17.8916 19.7878C17.2992 20.0094 16.6731 20.1278 16.0406 20.1377C14.9797 20.1828 14.6637 20.1941 12 20.1941C9.32506 20.1941 9.00903 20.1941 7.95937 20.1377C7.3238 20.1322 6.69388 20.0177 6.09706 19.7991C5.63431 19.6072 5.307 19.3928 4.94582 19.0429C4.60722 18.7043 4.38149 18.3657 4.2009 17.8916C3.98313 17.2985 3.8686 16.6724 3.8623 16.0406C3.80587 14.9797 3.79458 14.6637 3.79458 12C3.79458 9.32506 3.80587 9.00903 3.85102 7.95937C3.85602 7.32375 3.97057 6.69376 4.18962 6.09706C4.38149 5.63431 4.59594 5.307 4.94582 4.94582C5.29571 4.60722 5.62302 4.38149 6.09706 4.2009C6.69376 3.98185 7.32375 3.86731 7.95937 3.8623C8.87359 3.81716 9.23476 3.80587 11.0971 3.79458V3.80587ZM17.3386 5.46501C17.1815 5.46501 17.0259 5.49596 16.8808 5.55608C16.7356 5.6162 16.6037 5.70433 16.4926 5.81542C16.3815 5.92652 16.2934 6.05841 16.2333 6.20356C16.1732 6.34871 16.1422 6.50429 16.1422 6.6614C16.1422 6.81851 16.1732 6.97408 16.2333 7.11924C16.2934 7.26439 16.3815 7.39628 16.4926 7.50737C16.6037 7.61847 16.7356 7.70659 16.8808 7.76672C17.0259 7.82684 17.1815 7.85779 17.3386 7.85779C17.6559 7.85779 17.9602 7.73174 18.1846 7.50737C18.4089 7.28301 18.535 6.9787 18.535 6.6614C18.535 6.3441 18.4089 6.03979 18.1846 5.81542C17.9602 5.59106 17.6559 5.46501 17.3386 5.46501ZM12 6.86456C11.3256 6.86456 10.6578 6.99739 10.0348 7.25547C9.41169 7.51355 8.84556 7.89182 8.36869 8.36869C7.89182 8.84556 7.51355 9.41169 7.25547 10.0348C6.99739 10.6578 6.86456 11.3256 6.86456 12C6.86456 12.6744 6.99739 13.3422 7.25547 13.9652C7.51355 14.5883 7.89182 15.1544 8.36869 15.6313C8.84556 16.1082 9.41169 16.4864 10.0348 16.7445C10.6578 17.0026 11.3256 17.1354 12 17.1354C13.362 17.1354 14.6682 16.5944 15.6313 15.6313C16.5944 14.6682 17.1354 13.362 17.1354 12C17.1354 10.638 16.5944 9.33178 15.6313 8.36869C14.6682 7.40561 13.362 6.86456 12 6.86456ZM12 8.67043C12.4372 8.67043 12.8702 8.75655 13.2742 8.92388C13.6781 9.0912 14.0452 9.33646 14.3544 9.64564C14.6635 9.95482 14.9088 10.3219 15.0761 10.7258C15.2434 11.1298 15.3296 11.5628 15.3296 12C15.3296 12.4372 15.2434 12.8702 15.0761 13.2742C14.9088 13.6781 14.6635 14.0452 14.3544 14.3544C14.0452 14.6635 13.6781 14.9088 13.2742 15.0761C12.8702 15.2434 12.4372 15.3296 12 15.3296C11.1169 15.3296 10.2701 14.9788 9.64564 14.3544C9.02122 13.7299 8.67043 12.8831 8.67043 12C8.67043 11.1169 9.02122 10.2701 9.64564 9.64564C10.2701 9.02122 11.1169 8.67043 12 8.67043Z" fill="#ff4d00"></path>
+                        </svg>
+                        Instagram</a>
+                    <a href="https://github.com/shashikant70086">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
+  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8" fill="#ff4d00"/>
+</svg>
+                        GitHub</a>
+                    <a href="https://www.linkedin.com/in/shashikant-in">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="16" height="16" fill="currentColor" class="bi bi-linkedin"  viewBox="0 0 16 16">
+  <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z" fill="#ff4d00"/>
+</svg>
+                        LinkedIn</a>
+                    <a href="https://x.com/Shashikant70086">
+                        <svg fill="currentColor" width="18" height="18" viewBox="0 0 22 22" class="text-profileTitleText"><title>X</title><path d="M17.8048 2.96973H20.8705L14.1394 10.6338L22.0034 21.0304H15.8321L11.0004 14.7125L5.46893 21.0304H2.40328L9.53424 12.8331L2.00342 2.96973H8.32798L12.6932 8.74114L17.8048 2.96973ZM16.7318 19.231H18.4313L7.43494 4.70248H5.60888L16.7318 19.231Z" fill="#ff4d00"></path></svg>
+                        Twitter</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // 1. Initialize Lenis Smooth Scroll
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Exponential easing
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // 2. Intersection Observer for Scroll Animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // 3. Dark Mode Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        // Check local storage or system preference
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+
+        // 4. Mobile Menu Logic
+        function toggleMenu() {
+            document.getElementById('mobileMenu').classList.toggle('active');
+            
+            // Transform hamburger icon logic could go here (animate spans)
+            const spans = document.querySelectorAll('.hamburger span');
+            if(document.getElementById('mobileMenu').classList.contains('active')) {
+                spans[0].style.transform = "rotate(45deg) translate(5px, 5px)";
+                spans[1].style.opacity = "0";
+                spans[2].style.transform = "rotate(-45deg) translate(5px, -6px)";
+            } else {
+                spans[0].style.transform = "none";
+                spans[1].style.opacity = "1";
+                spans[2].style.transform = "none";
+            }
+        }
+
+        // 5. Touch Interaction Logic (Tap to Expand)
+        function handleProjectClick(e, element) {
+            // Check if device supports hover (desktop)
+            if (window.matchMedia('(hover: hover)').matches) {
+                return; // Let default click happen
+            }
+
+            // Mobile/Touch Logic:
+            if (!element.classList.contains('expanded')) {
+                e.preventDefault(); // Stop navigation
+                
+                // Close other expanded items
+                document.querySelectorAll('.project-link.expanded').forEach(el => {
+                    if (el !== element) el.classList.remove('expanded');
+                });
+                
+                element.classList.add('expanded'); // Expand this one
+            } 
+            // If already expanded, let the click proceed to navigation (href)
+        }
+
+        // Year update
+        document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
